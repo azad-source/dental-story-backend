@@ -1,15 +1,22 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import config from "../auth.config";
-import db from "../models";
+import db, { Roles } from "../models";
 const User = db.user;
 const Role = db.role;
 
+import log from "winston";
+
 export const signup = (req: any, res: any) => {
+  const password = req.body.password;
+  const salt = bcrypt.genSaltSync(10);
+
+  log.info(`username: ${req.body.username}`);
+
   const user = new User({
     username: req.body.username,
     email: req.body.email,
-    password: bcrypt.hashSync(req.body.password, 8),
+    password: bcrypt.hashSync(password, 8),
   });
 
   user.save((err: any, user: any) => {
@@ -18,30 +25,27 @@ export const signup = (req: any, res: any) => {
       return;
     }
 
-    if (req.body.roles) {
-      Role.find(
-        {
-          name: { $in: req.body.roles },
-        },
-        (err: any, roles: any) => {
+    const roles = req.body.roles.split(",") as Roles[];
+
+    if (roles) {
+      Role.find({ name: { $in: roles } }, (err: any, roles: any) => {
+        if (err) {
+          res.status(500).send({ message: err });
+          return;
+        }
+
+        user.roles = roles.map((role: any) => role._id);
+        user.save((err: any) => {
           if (err) {
             res.status(500).send({ message: err });
             return;
           }
 
-          user.roles = roles.map((role: any) => role._id);
-          user.save((err: any) => {
-            if (err) {
-              res.status(500).send({ message: err });
-              return;
-            }
-
-            res.send({ message: "User was registered successfully!" });
-          });
-        }
-      );
+          res.send({ message: "Dentist was registered successfully!" });
+        });
+      });
     } else {
-      Role.findOne({ name: "user" }, (err: any, role: any) => {
+      Role.findOne({ name: Roles.DENTIST }, (err: any, role: any) => {
         if (err) {
           res.status(500).send({ message: err });
           return;
@@ -54,7 +58,7 @@ export const signup = (req: any, res: any) => {
             return;
           }
 
-          res.send({ message: "User was registered successfully!" });
+          res.send({ message: "Dentist was registered successfully!" });
         });
       });
     }
@@ -73,7 +77,7 @@ export const signin = (req: any, res: any) => {
       }
 
       if (!user) {
-        return res.status(404).send({ message: "User Not found." });
+        return res.status(404).send({ message: "Dentist Not found." });
       }
 
       var passwordIsValid = bcrypt.compareSync(

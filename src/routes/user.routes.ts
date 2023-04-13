@@ -1,13 +1,15 @@
 import { authJwt } from "../middlewares";
 import {
   allAccess,
-  userBoard,
-  moderatorBoard,
+  dentistBoard,
+  superUserBoard,
   adminBoard,
 } from "../controllers/user.controller";
+import { Express } from "express";
 
-export default function (app: any) {
-  app.use(function (req: any, res: any, next: any) {
+export default function (app: Express) {
+  app.use(function (req, res, next) {
+    res.setHeader('content-type', 'application/json');
     res.header(
       "Access-Control-Allow-Headers",
       "x-access-token, Origin, Content-Type, Accept"
@@ -17,12 +19,12 @@ export default function (app: any) {
 
   app.get("/api/test/all", allAccess);
 
-  app.get("/api/test/user", [authJwt.verifyToken], userBoard);
+  app.get("/api/test/dentist", [authJwt.verifyToken], dentistBoard);
 
   app.get(
-    "/api/test/mod",
-    [authJwt.verifyToken, authJwt.isModerator],
-    moderatorBoard
+    "/api/test/super-user",
+    [authJwt.verifyToken, authJwt.isSuperUser],
+    superUserBoard
   );
 
   app.get(

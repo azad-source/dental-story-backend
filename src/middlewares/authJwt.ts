@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import config from "../auth.config";
-import db from "../models";
+import db, { Roles } from "../models";
 const User = db.user;
 const Role = db.role;
 
@@ -34,7 +34,7 @@ const isAdmin = (req:any, res:any, next:any) => {
       }
 
       for (let i = 0; i < roles.length; i++) {
-        if (roles[i].name === "admin") {
+        if (roles[i].name === Roles.ADMIN) {
           next();
           return;
         }
@@ -46,7 +46,7 @@ const isAdmin = (req:any, res:any, next:any) => {
   });
 };
 
-const isModerator = (req:any, res:any, next:any) => {
+const isSuperUser = (req:any, res:any, next:any) => {
   User.findById(req.userId).exec((err:any, user:any) => {
     if (err) {
       res.status(500).send({ message: err });
@@ -60,13 +60,13 @@ const isModerator = (req:any, res:any, next:any) => {
       }
 
       for (let i = 0; i < roles.length; i++) {
-        if (roles[i].name === "moderator") {
+        if (roles[i].name === Roles.SUPER_USER) {
           next();
           return;
         }
       }
 
-      res.status(403).send({ message: "Require Moderator Role!" });
+      res.status(403).send({ message: "Require SuperUser Role!" });
       return;
     });
   });
@@ -75,7 +75,7 @@ const isModerator = (req:any, res:any, next:any) => {
 const authJwt = {
   verifyToken,
   isAdmin,
-  isModerator,
+  isSuperUser,
 };
 
 export default authJwt

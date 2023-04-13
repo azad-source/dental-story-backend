@@ -1,4 +1,5 @@
 import db from "../models";
+import log from "winston";
 const ROLES = db.ROLES;
 const User = db.user;
 
@@ -34,10 +35,11 @@ const checkDuplicateUsernameOrEmail = (req: any, res: any, next: any) => {
 
 const checkRolesExisted = (req: any, res: any, next: any) => {
   if (req.body.roles) {
-    for (let i = 0; i < req.body.roles.length; i++) {
-      if (!ROLES.includes(req.body.roles[i])) {
+    const rolesArr = req.body.roles.split(',');
+    for (let i = 0; i < rolesArr.length; i++) {
+      if (!ROLES.includes(rolesArr[i])) {
         res.status(400).send({
-          message: `Failed! Role ${req.body.roles[i]} does not exist!`,
+          message: `Failed! Role ${rolesArr[i]} does not exist!`,
         });
         return;
       }

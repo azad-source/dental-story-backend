@@ -2,7 +2,7 @@ require("dotenv").config({ path: __dirname + "/.env" });
 import fs from "fs";
 import http from "http";
 import https from "https";
-import express from "express";
+import express, { Express } from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
 import bodyParser from "body-parser";
@@ -18,18 +18,19 @@ const env = process.env.NODE_ENV || process.env.APP_ENV;
 const isDev = env === "development";
 const isProd = env === "production";
 
-// log.info('APP_ENV:'+process.env['APP_ENV']);
-
 /** Server */
 const domain = process.env.SERVER_DOMAIN;
 const port = process.env.SERVER_PORT;
-const apiRoot = "/api/dental-story";
+const apiRoot = "/";
 
 /** Database */
 const dbName = process.env.DATABASE_NAME;
 const dbUser = process.env.DATABASE_USER;
 const dbPass = process.env.DATABASE_PASS;
 const mongoUrl = `mongodb://${domain}:27017/${dbName}`;
+
+// log.info("port:" + process.env.SERVER_PORT);
+// log.info("mongoUrl:" + mongoUrl);
 
 let dbConfig = {};
 
@@ -69,13 +70,15 @@ function initial() {
   });
 }
 
-const app = express();
+const app: Express = express();
 
 app.use(cors());
 app.use(morgan("dev"));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(apiRoot, authRoutes, userRoutes);
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+authRoutes(app);
+userRoutes(app);
+
 app.use(express.static("public"));
 
 // Starting both http & https servers
