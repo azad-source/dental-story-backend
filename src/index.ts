@@ -1,14 +1,18 @@
-require('dotenv').config({ path: __dirname + '/.env' })
-const fs = require("fs");
-const http = require("http");
-const https = require("https");
-const express = require("express");
-const mongoose = require("mongoose");
-const morgan = require("morgan");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const RecipeRoute = require("./routes/recipe");
-const log = require('winston');
+require("dotenv").config({ path: __dirname + "/.env" });
+import fs from "fs";
+import http from "http";
+import https from "https";
+import express from "express";
+import mongoose from "mongoose";
+import morgan from "morgan";
+import bodyParser from "body-parser";
+import cors from "cors";
+import log from "winston";
+import dbInfo from "./models";
+import authRoutes from "./routes/auth.routes";
+import userRoutes from "./routes/user.routes";
+
+mongoose.set("strictQuery", true);
 
 const env = process.env.NODE_ENV || process.env.APP_ENV;
 const isDev = env === "development";
@@ -19,7 +23,7 @@ const isProd = env === "production";
 /** Server */
 const domain = process.env.SERVER_DOMAIN;
 const port = process.env.SERVER_PORT;
-const apiRoot = "/api/recipe";
+const apiRoot = "/api/dental-story";
 
 /** Database */
 const dbName = process.env.DATABASE_NAME;
@@ -39,14 +43,31 @@ if (isProd) {
   };
 }
 
+const Role = dbInfo.role;
+
 mongoose
   .connect(mongoUrl, dbConfig)
   .then(() => {
     console.log("DB Connection Established!");
+    initial();
   })
-  .catch((err) => {
+  .catch((err: any) => {
     console.log(err);
+    process.exit();
   });
+
+function initial() {
+  Role.estimatedDocumentCount((err: any, count: number) => {
+    if (!err && count === 0) {
+      dbInfo.ROLES.forEach((role) => {
+        new Role({ name: role }).save((err: any) => {
+          if (err) console.log("error", err);
+          console.log(`added ${role} to roles collection`);
+        });
+      });
+    }
+  });
+}
 
 const app = express();
 
@@ -54,7 +75,7 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(apiRoot, RecipeRoute);
+app.use(apiRoot, authRoutes, userRoutes);
 app.use(express.static("public"));
 
 // Starting both http & https servers
