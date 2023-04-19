@@ -1,11 +1,14 @@
 import mongoose from "mongoose";
+import { RolesEnum } from "../enums/Role.enums";
 
 const Schema = mongoose.Schema;
 
-const roleSchema = new Schema({
-  name: String,
+export interface IRole {
+  name: RolesEnum;
+}
+
+const roleSchema = new Schema<IRole>({
+  name: { type: String, enum: Object.values(RolesEnum), require: true },
 });
 
-const Role = mongoose.model("Role", roleSchema);
-
-export default Role;
+export const RoleModel = mongoose.model("Role", roleSchema);

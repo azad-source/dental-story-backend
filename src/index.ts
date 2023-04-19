@@ -5,12 +5,12 @@ import https from "https";
 import express, { Express } from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
-import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 import cors from "cors";
-import log from "winston";
-import dbInfo from "./models";
-import authRoutes from "./routes/auth.routes";
-import userRoutes from "./routes/user.routes";
+import { authRoutes } from "./routes/auth.routes";
+import { userRoutes } from "./routes/user.routes";
+import { RoleModel } from "./models/Role.model";
+import { RolesEnum } from "./enums/Role.enums";
 
 mongoose.set("strictQuery", true);
 
@@ -44,8 +44,6 @@ if (isProd) {
   };
 }
 
-const Role = dbInfo.role;
-
 mongoose
   .connect(mongoUrl, dbConfig)
   .then(() => {
@@ -58,10 +56,10 @@ mongoose
   });
 
 function initial() {
-  Role.estimatedDocumentCount((err: any, count: number) => {
+  RoleModel.estimatedDocumentCount((err: any, count: number) => {
     if (!err && count === 0) {
-      dbInfo.ROLES.forEach((role) => {
-        new Role({ name: role }).save((err: any) => {
+      Object.values(RolesEnum).forEach((role) => {
+        new RoleModel({ name: role }).save((err: any) => {
           if (err) console.log("error", err);
           console.log(`added ${role} to roles collection`);
         });
@@ -72,6 +70,7 @@ function initial() {
 
 const app: Express = express();
 
+app.use(cookieParser());
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));

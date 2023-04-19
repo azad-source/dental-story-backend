@@ -1,15 +1,15 @@
-import { authJwt } from "../middlewares";
+import { Express } from "express";
+import { isAdmin, isSuperUser, verifyToken } from "../middlewares/authJwt";
 import {
   allAccess,
   dentistBoard,
   superUserBoard,
   adminBoard,
 } from "../controllers/user.controller";
-import { Express } from "express";
 
-export default function (app: Express) {
+export const userRoutes = (app: Express) => {
   app.use(function (req, res, next) {
-    res.setHeader('content-type', 'application/json');
+    res.setHeader("content-type", "application/json");
     res.header(
       "Access-Control-Allow-Headers",
       "x-access-token, Origin, Content-Type, Accept"
@@ -19,17 +19,9 @@ export default function (app: Express) {
 
   app.get("/api/test/all", allAccess);
 
-  app.get("/api/test/dentist", [authJwt.verifyToken], dentistBoard);
+  app.get("/api/test/dentist", [verifyToken], dentistBoard);
 
-  app.get(
-    "/api/test/super-user",
-    [authJwt.verifyToken, authJwt.isSuperUser],
-    superUserBoard
-  );
+  app.get("/api/test/super-user", [verifyToken, isSuperUser], superUserBoard);
 
-  app.get(
-    "/api/test/admin",
-    [authJwt.verifyToken, authJwt.isAdmin],
-    adminBoard
-  );
-}
+  app.get("/api/test/admin", [verifyToken, isAdmin], adminBoard);
+};

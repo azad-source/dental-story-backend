@@ -1,17 +1,17 @@
 import jwt from "jsonwebtoken";
-import config from "../auth.config";
-import db, { Roles } from "../models";
-const User = db.user;
-const Role = db.role;
+import { AUTH_SECRET_KEY } from "../config";
+import { RoleModel } from "../models/Role.model";
+import { UserModel } from "../models/User.model";
+import { RolesEnum } from "../enums/Role.enums";
 
-const verifyToken = (req:any, res:any, next:any) => {
+const verifyToken = (req: any, res: any, next: any) => {
   let token = req.headers["x-access-token"];
 
   if (!token) {
     return res.status(403).send({ message: "No token provided!" });
   }
 
-  jwt.verify(token, config.secret, (err:any, decoded:any) => {
+  jwt.verify(token, AUTH_SECRET_KEY, (err: any, decoded: any) => {
     if (err) {
       return res.status(401).send({ message: "Unauthorized!" });
     }
@@ -20,21 +20,21 @@ const verifyToken = (req:any, res:any, next:any) => {
   });
 };
 
-const isAdmin = (req:any, res:any, next:any) => {
-  User.findById(req.userId).exec((err:any, user:any) => {
+const isAdmin = (req: any, res: any, next: any) => {
+  UserModel.findById(req.userId).exec((err: any, user: any) => {
     if (err) {
       res.status(500).send({ message: err });
       return;
     }
 
-    Role.find({ _id: { $in: user.roles } }, (err:any, roles:any) => {
+    RoleModel.find({ _id: { $in: user.roles } }, (err: any, roles: any) => {
       if (err) {
         res.status(500).send({ message: err });
         return;
       }
 
       for (let i = 0; i < roles.length; i++) {
-        if (roles[i].name === Roles.ADMIN) {
+        if (roles[i].name === RolesEnum.ADMIN) {
           next();
           return;
         }
@@ -46,21 +46,21 @@ const isAdmin = (req:any, res:any, next:any) => {
   });
 };
 
-const isSuperUser = (req:any, res:any, next:any) => {
-  User.findById(req.userId).exec((err:any, user:any) => {
+const isSuperUser = (req: any, res: any, next: any) => {
+  UserModel.findById(req.userId).exec((err: any, user: any) => {
     if (err) {
       res.status(500).send({ message: err });
       return;
     }
 
-    Role.find({ _id: { $in: user.roles } }, (err:any, roles:any) => {
+    RoleModel.find({ _id: { $in: user.roles } }, (err: any, roles: any) => {
       if (err) {
         res.status(500).send({ message: err });
         return;
       }
 
       for (let i = 0; i < roles.length; i++) {
-        if (roles[i].name === Roles.SUPER_USER) {
+        if (roles[i].name === RolesEnum.SUPER_USER) {
           next();
           return;
         }
@@ -72,10 +72,4 @@ const isSuperUser = (req:any, res:any, next:any) => {
   });
 };
 
-const authJwt = {
-  verifyToken,
-  isAdmin,
-  isSuperUser,
-};
-
-export default authJwt
+export { verifyToken, isAdmin, isSuperUser };

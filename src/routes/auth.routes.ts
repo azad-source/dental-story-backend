@@ -1,10 +1,10 @@
-import { verifySignUp } from "../middlewares";
 import { signin, signup } from "../controllers/auth.controller";
 import { Express } from "express";
+import { checkExistRoles, checkExistUser } from "../middlewares/verifySignUp";
 
-export default function (app: Express) {
+export const authRoutes = (app: Express) => {
   app.use(function (req, res, next) {
-    res.setHeader('content-type', 'application/json');
+    res.setHeader("content-type", "application/json");
     res.header(
       "Access-Control-Allow-Headers",
       "x-access-token, Origin, Content-Type, Accept"
@@ -12,14 +12,7 @@ export default function (app: Express) {
     next();
   });
 
-  app.post(
-    "/api/auth/signup",
-    [
-      verifySignUp.checkDuplicateUsernameOrEmail,
-      verifySignUp.checkRolesExisted,
-    ],
-    signup
-  );
+  app.post("/api/auth/signup", [checkExistUser, checkExistRoles], signup);
 
   app.post("/api/auth/signin", signin);
-}
+};
